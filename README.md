@@ -5,7 +5,7 @@ Directory-scale and sample-based text similarity tools from the Linux command li
 
 `matchtext` performs single sample vs repository match scoring.
 
-**We have found from experience mostsimilar is very useful in RAG pipelines to remove duplicate documents that have different MD5/SHA-256/SHA-512 hashes but same/similar contents. C/C++ ensures very respectable performance given the hungry nature of the task.**
+**We have found from experience mostsimilar is very useful in RAG pipelines to remove duplicate documents that have different MD5/SHA-256/SHA-512 hashes but same/similar contents. C/C++ ensures very respectable performance given the hungry nature of the task. See below for more detail.**
 
 ## Overview
 - Both tools process a whitelist of extensions (see `MatchText/Utils.cpp`).
