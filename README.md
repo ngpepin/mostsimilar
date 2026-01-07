@@ -99,6 +99,42 @@ Example output (`./build/mostsimilar Data/RepoWithSample --hash`):
 * TF-IDF cosine similarity down-weights common words, while SimHash focuses on token presence rather than frequency, which makes its scores discrete (multiples of 1/128) and creates more ties. 
 * That tends to reshuffle the ordering compared to TF-IDF similarity, and can elevate different nearest neighbors even when the corpus is the same. Stop-word removal also shifts the ordering by reducing common-word noise.
 
+## RAG: How mostsimilar supports retrieval pipelines
+`mostsimilar` is a lightweight, offline similarity pass that complements retrieval in a RAG system:
+
+Benefits
+- Pre-ingest duplicate removal lowers embedding costs and vector store size.
+- `pair_id` provides a stable way to collapse or de-prioritize redundant documents.
+- The TF-IDF/SimHash signals are deterministic and don’t require external services.
+
+Concrete ways to use it
+1) Pre-ingest de-duplication:
+   - Run `mostsimilar --dedup 0.98 <repo>` to move near-duplicates into `Duplicates/`.
+   - Ingest only the remaining files to reduce noise and chunk volume.
+2) Cluster-aware retrieval:
+   - Keep all files but collapse by `pair_id` so your retriever returns one representative per pair.
+3) Canonical source tracking:
+   - Use the preferred-vs-duplicate ordering (left vs right) to choose a canonical file.
+   - Store the canonical path as metadata in your index for traceability.
+
+Technical integration sketch
+- Run nightly (or during ingestion) and store the CSV alongside the corpus.
+- Parse `pair_id` and `most_similar` into a map: `file -> canonical_file`.
+- During chunking, inherit `canonical_file` into chunk metadata.
+- During retrieval, collapse or down-rank chunks with the same `canonical_file`.
+
+Example workflow
+```
+# 1) Pre-ingest dedup
+./build/mostsimilar --dedup 0.98 /data/corpus
+
+# 2) Load remaining files and build embeddings
+python ingest.py /data/corpus
+
+# 3) Use pair_id or canonical mapping during retrieval
+python serve.py --dedup-map /data/corpus_mostsimilar.csv
+```
+
 ## matchtext
 Windows:
 ```
