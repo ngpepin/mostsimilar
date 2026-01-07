@@ -582,7 +582,7 @@ int main(int argc, char* argv[]) {
   if (argc < 2) {
     std::fprintf(stderr,
                  "Find the closest match for each file within a directory tree and write a CSV.\n"
-                 "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert]\n",
+                 "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert] [--verbose]\n",
                  argv[0]);
     return 1;
   }
@@ -594,6 +594,7 @@ int main(int argc, char* argv[]) {
   double dedup_threshold = 1.0;
   bool safe_mode = false;
   bool no_convert = false;
+  bool verbose = false;
   fs::path root;
   // Parse arguments: one directory plus optional flags.
   for (int i = 1; i < argc; i++) {
@@ -637,16 +638,21 @@ int main(int argc, char* argv[]) {
       no_convert = true;
       continue;
     }
+    if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+      verbose = true;
+      continue;
+    }
     if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
       std::fprintf(stderr,
                    "Find the closest match for each file within a directory tree and write a CSV.\n"
-                   "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert]\n"
+                   "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert] [--verbose]\n"
                    "  --hash  Use SimHash to compare files instead of TF-IDF cosine similarity.\n"
                    "  --dedup [threshold]  Move matches with score >= threshold (default 1.0)\n"
                    "                       into <Directory>/Duplicates.\n"
                    "  --threads N  Override the worker thread count used for file parsing.\n"
                    "  --safe  Serialize PDF extraction to avoid poppler threading issues.\n"
                    "  --no-convert  Skip format-specific extractors and read raw bytes only.\n"
+                   "  --verbose  Print files as they are read and comparisons as they are scored.\n"
                    "Scores are normalized to [0, 1], where 1.0 means identical.\n",
                    argv[0]);
       return 0;
@@ -666,7 +672,7 @@ int main(int argc, char* argv[]) {
   if (root.empty()) {
     std::fprintf(stderr,
                  "Find the closest match for each file within a directory tree and write a CSV.\n"
-                 "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert]\n",
+                 "Usage: %s <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert] [--verbose]\n",
                  argv[0]);
     return 1;
   }
@@ -733,6 +739,9 @@ int main(int argc, char* argv[]) {
         }
         const fs::path& file_path = all_files[index];
         Statistics stat;
+        if (verbose) {
+          std::fprintf(stderr, "\nReading file: %s\n", file_path.string().c_str());
+        }
         if (!ReadFileToStatistics(file_path.string(), &stat, safe_mode, no_convert)) {
           processed.fetch_add(1);
           continue;
@@ -820,6 +829,12 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < n; i++) {
     PrintProgressWithThreads("Computing matches", i + 1, n, worker_count);
     for (size_t j = i + 1; j < n; j++) {
+      if (verbose) {
+        std::fprintf(stderr,
+                     "\nComparing: %s <> %s\n",
+                     files[i].string().c_str(),
+                     files[j].string().c_str());
+      }
       const double score = use_hash
         ? Statistics::SimHashSimilarity(hashes[i], hashes[j])
         : Statistics::TfIdfCosineSimilarity(stats[i], stats[j]);

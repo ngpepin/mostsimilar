@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
   if (argc < 3) {
     fprintf(stderr,
             "Match a sample file against a repository and list results by similarity.\n"
-            "Usage: %s <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert]\n",
+            "Usage: %s <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert] [--verbose]\n",
             argv[0]);
     return 1;
   }
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
   unsigned int requested_threads = 0;
   bool safe_mode = false;
   bool no_convert = false;
+  bool verbose = false;
   for (int i = 3; i < argc; i++) {
     if (strcmp(argv[i], "--recursive") == 0 || strcmp(argv[i], "-r") == 0) {
       recursive = true;
@@ -70,14 +71,19 @@ int main(int argc, char *argv[])
       no_convert = true;
       continue;
     }
+    if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+      verbose = true;
+      continue;
+    }
     if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
       fprintf(stderr,
               "Match a sample file against a repository and list results by similarity.\n"
-              "Usage: %s <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert]\n"
+              "Usage: %s <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert] [--verbose]\n"
               "  --hash  Use SimHash to compare files instead of TF-IDF cosine similarity.\n"
               "  --threads N  Override the worker thread count used for file parsing.\n"
               "  --safe  Serialize PDF extraction to avoid poppler threading issues.\n"
               "  --no-convert  Skip format-specific extractors and read raw bytes only.\n"
+              "  --verbose  Print files as they are read and comparisons as they are scored.\n"
               "Scores are normalized to [0, 1], where 1.0 means identical.\n",
               argv[0]);
       return 0;
@@ -87,8 +93,12 @@ int main(int argc, char *argv[])
   }
 
   // Load and tokenize the sample document once.
+  const std::string sample_path = argv[1];
   Statistics sampleStat;
-  if (!ReadFileToStatistics(argv[1], &sampleStat, safe_mode, no_convert)) {
+  if (verbose) {
+    fprintf(stderr, "Reading file: %s\n", sample_path.c_str());
+  }
+  if (!ReadFileToStatistics(sample_path, &sampleStat, safe_mode, no_convert)) {
     return 2;
   }
   if (sampleStat.IsEmpty()) {
@@ -116,6 +126,9 @@ int main(int argc, char *argv[])
       std::string repoFilePath;
       while (bq.Pop(repoFilePath)) {
         Statistics repoStat;
+        if (verbose) {
+          fprintf(stderr, "Reading file: %s\n", repoFilePath.c_str());
+        }
         if (!ReadFileToStatistics(repoFilePath, &repoStat, safe_mode, no_convert)) {
           continue;
         }
@@ -196,6 +209,9 @@ int main(int argc, char *argv[])
   std::vector<RepoEntry> entries;
   entries.reserve(repo_docs.size());
   for (const auto& doc : repo_docs) {
+    if (verbose) {
+      fprintf(stderr, "Comparing: %s <> %s\n", sample_path.c_str(), doc.path.c_str());
+    }
     const double score = use_hash
       ? Statistics::SimHashSimilarity(sample_hash, doc.stats.SimHash128Signature())
       : Statistics::TfIdfCosineSimilarity(sampleStat, doc.stats);

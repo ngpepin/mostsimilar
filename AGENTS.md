@@ -8,14 +8,15 @@
 - Debian packages: builds emit `.deb` files to `build/packages/` (or run `cmake --build build --target deb`).
 
 ## CLI entry points
-- matchtext: `./build/matchtext <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert]`
+- matchtext: `./build/matchtext <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert] [--verbose]`
   - Compares a single sample file to each candidate file in the repository directory.
   - `--recursive` (or `-r`) scans subdirectories.
   - `--hash` uses SimHash instead of TF-IDF.
   - `--threads N` overrides the worker count used for file parsing.
   - `--safe` serializes PDF extraction to avoid poppler threading issues.
   - `--no-convert` skips format-specific extractors (PDF/Office/RTF) and reads raw bytes only.
-- mostsimilar: `./build/mostsimilar <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert]`
+  - `--verbose` prints files as they are read and comparisons as they are scored.
+- mostsimilar: `./build/mostsimilar <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert] [--verbose]`
   - Compares every eligible file to every other file in the directory tree (O(n^2)).
   - Writes `<Directory>_mostsimilar.csv` to the current working directory (`_hash` suffix when using `--hash`).
   - CSV columns: `file`, `most_similar`, `score`, `pair_id` (reciprocal pair identifier).
@@ -31,6 +32,7 @@
   - `--threads N` overrides the worker count used for file parsing.
   - `--safe` serializes PDF extraction to avoid poppler threading issues.
   - `--no-convert` skips format-specific extractors (PDF/Office/RTF) and reads raw bytes only.
+  - `--verbose` prints files as they are read and comparisons as they are scored.
 
 ## Data and output
 - Sample data lives in `Data/`; README output is produced from `Data/Sample.txt` against `Data/Repo`.

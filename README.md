@@ -19,6 +19,7 @@ Directory-scale and sample-based text similarity tools from the Linux command li
 - `--threads N` overrides the worker thread count for file parsing.
 - `--safe` serializes PDF extraction if poppler is unstable with threads.
 - `--no-convert` skips format-specific extractors and reads raw bytes only.
+- `--verbose` prints files as they are read and file pairs as they are compared.
 
 ## Build (Ubuntu)
 ```
@@ -35,7 +36,7 @@ cmake --build build --target deb
 
 ## mostsimilar
 ```
-./build/mostsimilar <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert]
+./build/mostsimilar <Directory> [--hash] [--dedup] [--threads N] [--safe] [--no-convert] [--verbose]
 ```
 
 Behavior
@@ -101,12 +102,12 @@ Example output (`./build/mostsimilar Data/RepoWithSample --hash`):
 ## matchtext
 Windows:
 ```
-MatchText.exe <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert]
+MatchText.exe <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert] [--verbose]
 ```
 
 Ubuntu:
 ```
-./build/matchtext <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert]
+./build/matchtext <Sample File> <Repository Directory> [--recursive] [--hash] [--threads N] [--safe] [--no-convert] [--verbose]
 ```
 
 Below is the output for sample "FAIRY TALES By The Brothers Grimm" against a repository of 10 other books using TF-IDF cosine similarity:
