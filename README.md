@@ -1,5 +1,5 @@
 # mostsimilar & matchtext
-Directory-scale and sample-based text similarity tools from the Linux command line, built on top of https://github.com/srogatch/TextMatching C++ .NET repo.
+Directory-scale and sample-based text similarity tools from the Linux command line, porting, significantly altering and greatly enhancing the excellent https://github.com/srogatch/TextMatching C++ .NET repo.
 
 `mostsimilar` provides directory-wide best matches via pairwise comparisons.
 
